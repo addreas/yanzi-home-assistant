@@ -21,7 +21,12 @@ class YanziEntity(Entity):
                 self.source['latest'] = event.data['sample']
 
                 if self.source['variableName'] == 'uplog':
-                    self.device['lifeCycleState'] = self.source['latest']['deviceUpState']['name']
+                    upState = self.source['latest']['deviceUpState']['name']
+
+                    if upState in ['goingUp', 'up']:
+                        self.device['lifeCycleState'] = 'present'
+                    else:
+                        self.device['lifeCycleState'] = 'shadow'
 
                 await self.async_update_ha_state()
 
