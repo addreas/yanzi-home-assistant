@@ -43,6 +43,7 @@ async def get_access_token(host, session_id, location_id):
 
         return base64.b64decode(response['list'][0]['blobData']).decode()
 
+
 class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     """Handle a config flow for yanzi."""
 
@@ -58,7 +59,7 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 username = user_input['username']
                 password = user_input['password']
                 location_id = user_input['location_id']
-                
+
                 await self.async_set_unique_id(f"yanzi://{username}@{host}/{location_id}")
                 self._abort_if_unique_id_configured()
 
@@ -66,12 +67,12 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 access_token = await get_access_token(host, session_id, location_id)
 
                 return self.async_create_entry(
-                        title=str(location_id), 
-                        data={
-                            "host": host,
-                            "location_id": location_id,
-                            "access_token": access_token
-                        })
+                    title=str(location_id),
+                    data={
+                        "host": host,
+                        "location_id": location_id,
+                        "access_token": access_token
+                    })
             except WebSocketException as e:
                 _LOGGER.exception(e)
                 errors["base"] = "cannot_connect"

@@ -8,13 +8,16 @@ import logging
 import websockets
 log = logging.getLogger(__name__)
 
+
 @contextlib.asynccontextmanager
 async def connect(uri, **kwargs):
     async with websockets.connect(uri, **kwargs) as ws:
         ws._uri = uri
         yield Cirrus(ws)
 
+
 class Cirrus:
+
     def __init__(self, ws):
         self.ws = ws
         self._current_message_id = 0
@@ -42,7 +45,7 @@ class Cirrus:
         self.consumers.append(q)
         try:
             while True:
-                    yield await asyncio.wait_for(q.get(), timeout)
+                yield await asyncio.wait_for(q.get(), timeout)
         finally:
             self.consumers.remove(q)
 
@@ -95,8 +98,9 @@ class Cirrus:
         async def send_subscribe():
             response = await self.request(subscribe_request)
             assert response['responseCode']['name'] == 'success'
-            delay = response['expireTime']/1000 - time.time()
-            log.debug('Sending next subscribe request in %d seconds. (%d minutes)', delay, delay / 60)
+            delay = response['expireTime'] / 1000 - time.time()
+            log.debug(
+                'Sending next subscribe request in %d seconds. (%d minutes)', delay, delay / 60)
             await asyncio.sleep(delay)
             await send_subscribe()
 
