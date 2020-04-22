@@ -15,6 +15,7 @@ class YanziLocation:
         self.location_id = location_id
 
     async def get_device_sources(self):
+        log.debug('Called get_device_sources')
         location_address = { 'resourceType': 'LocationAddress', 'locationId': self.location_id }
 
         async with connect(f"wss://{self.host}/cirrusAPI?one") as ws:
@@ -124,7 +125,7 @@ qq_query = '''query {
             resourceType
             ... on SampleUpState { state }
             ... on SamplePosition { longitude, latitude }
-          } 
+          }
         }
 
         chassisChildren {
@@ -147,8 +148,8 @@ qq_query = '''query {
             }
           }
         }
-      } 
-    } 
+      }
+    }
     inventory {
       list {
         key

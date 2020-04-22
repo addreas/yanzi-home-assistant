@@ -21,7 +21,7 @@ class Cirrus:
         self.watchers = 0
 
     async def send_json(self, message):
-        # log.debug(message)
+        log.debug('sending on %s: %s' self.ws._uri, message)
         await self.ws.send(json.dumps(message))
 
     async def send_binary(self, message):
@@ -30,11 +30,12 @@ class Cirrus:
     async def _watch(self, timeout):
         self.watchers += 1
         log.debug('currently %d watchers for %s', self.watchers, self.ws._uri)
-        while True:
-            try: 
-                yield await asyncio.wait_for(self.ws.recv(), timeout)
-            finally:
-                self.watchers -= 1
+        try:
+            while True:
+                    yield await asyncio.wait_for(self.ws.recv(), timeout)
+        finally:
+            self.watchers -= 1
+            log.debug('finally %d watchers for %s', self.watchers, self.ws._uri)
 
     async def watch(self, timeout=None):
         async for message in self._watch(timeout):
@@ -83,18 +84,18 @@ class Cirrus:
 
     async def subscribe(self, subscribe_request):
         log.debug('called subscribe for %s', self.ws._uri)
-        # async def send_subscribe():
-        #     response = await self.request(subscribe_request)
-        #     assert response['responseCode']['name'] == 'success'
-        #     await asyncio.sleep(response['expireTime']/1000 - time.time())
-        #     await asyncio.create_task(send_subscribe())
+        async def send_subscribe():
+            response = await self.request(subscribe_request)
+            assert response['responseCode']['name'] == 'success'
+            await asyncio.sleep(response['expireTime']/1000 - time.time())
+            await asyncio.create_task(send_subscribe())
 
-        # subscription_task = asyncio.create_task(send_subscribe())
+        subscription_task = asyncio.create_task(send_subscribe())
 
         try:
             async for message in self.watch():
                 if message['messageType'] == 'SubscribeData':
-                    log.debug('SubscribeData')
+                    log.debug('SubscribeData from %s', self.ws._uri)
                     yield message
         except Exception as e:
             subscription_task.cancel()

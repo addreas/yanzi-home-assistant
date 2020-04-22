@@ -9,8 +9,7 @@ from .cirrus import Cirrus
 __LOGGER = logging.getLogger(__name__)
 
 async def async_setup_entry(hass, entry, async_add_entities):
-    __LOGGER.debug(hass)
-    __LOGGER.debug(entry.data)
+    __LOGGER.debug('async_setup_entry %s', entry.data)
 
     location = hass.data[DOMAIN][entry.entry_id]
 
@@ -23,6 +22,7 @@ class YanziSensor(Entity):
         self.source = source
 
     async def async_added_to_hass(self):
+        __LOGGER.debug('async_added_to_hass', self.source['key'])
         async def filter_data(data):
             if data['key'] == self.source['key']:
                 self.source['latest'] = sample
@@ -37,7 +37,7 @@ class YanziSensor(Entity):
     @property
     def unique_id(self):
         return self.source['key']
-    
+
     @property
     def name(self):
         return self.source['name'] + ' ' + self.source['variableName']
@@ -108,7 +108,7 @@ def get_device_class(variable_name):
     }[variable_name]
 
 def get_device_model(product_type):
-    return {       
+    return {
       '0090DA03010104A3': 'Yanzi LED',
       '0090DA03010104A1': 'Yanzi LED',
       '0090DA03010104B0': 'Yanzi Motion',
