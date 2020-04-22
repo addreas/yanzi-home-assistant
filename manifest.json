@@ -1,0 +1,16 @@
+{
+  "domain": "yanzi",
+  "name": "yanzi",
+  "config_flow": true,
+  "documentation": "https://www.home-assistant.io/integrations/yanzi",
+  "requirements": [
+    "websockets==8.1"
+  ],
+  "ssdp": [],
+  "zeroconf": [],
+  "homekit": {},
+  "dependencies": [],
+  "codeowners": [
+    "@addreas"
+  ]
+}
