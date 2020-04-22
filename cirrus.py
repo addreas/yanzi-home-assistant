@@ -32,7 +32,6 @@ class Cirrus:
             pass
 
     async def send_json(self, message):
-        log.debug('sending on %s: %s', self.ws._uri, message)
         await self.ws.send(json.dumps(message))
 
     async def send_binary(self, message):
@@ -41,13 +40,11 @@ class Cirrus:
     async def _watch(self, timeout):
         q = asyncio.Queue()
         self.consumers.append(q)
-        log.debug('currently %d consumers for %s', len(self.consumers), self.ws._uri)
         try:
             while True:
                     yield await asyncio.wait_for(q.get(), timeout)
         finally:
             self.consumers.remove(q)
-            log.debug('finally %d consumers for %s', len(self.consumers), self.ws._uri)
 
     async def watch(self, timeout=None):
         async for message in self._watch(timeout):
@@ -95,7 +92,6 @@ class Cirrus:
         return response['sessionId']
 
     async def subscribe(self, subscribe_request):
-        log.debug('called subscribe for %s', self.ws._uri)
         async def send_subscribe():
             response = await self.request(subscribe_request)
             assert response['responseCode']['name'] == 'success'
@@ -109,10 +105,7 @@ class Cirrus:
         try:
             async for message in self.watch():
                 if message['messageType'] == 'SubscribeData':
-                    log.debug('SubscribeData from %s', self.ws._uri)
                     yield message
-                else:
-                    log.debug('Filtered messageType %s', message['messageType'])
         finally:
             subscription_task.cancel()
             log.debug('Exiting subscription')

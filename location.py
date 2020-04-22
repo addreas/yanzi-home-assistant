@@ -16,7 +16,6 @@ class YanziLocation:
         self.location_id = location_id
 
     async def get_device_sources(self):
-        log.debug('Called get_device_sources')
         location_address = { 'resourceType': 'LocationAddress', 'locationId': self.location_id }
 
         async with connect(f"wss://{self.host}/cirrusAPI?one") as ws:
@@ -43,6 +42,10 @@ class YanziLocation:
                 device['version'] = key_to_version[device['key']]
 
                 for source in device['dataSources']:
+                    if source['variableName'] in ['log', 'unitState']:
+                      # These two are always null for physical devices?
+                      continue
+
                     source['name'] = device['name']
                     source['unitTypeFixed'] = 'physicalOrChassis'
                     source['latest'] = await self.get_latest(ws, device['unitAddress']['did'], source['variableName'])
@@ -78,7 +81,7 @@ class YanziLocation:
                         notify_update(key, message['list'][0]['list'][0])
 
             except CancelledError:
-                await asyncio.sleep()
+                await asyncio.sleep(1)
                 break
             except Exception as e:
                 log.warning('Restarting ws watch in 10 seconds because of: %s', e, exc_info=e)

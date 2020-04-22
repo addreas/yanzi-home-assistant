@@ -1,6 +1,7 @@
 import asyncio
 import logging
-
+import time
+import struct
 from homeassistant.helpers.entity import Entity
 
 from .const import DOMAIN
@@ -9,8 +10,6 @@ from .cirrus import Cirrus
 __LOGGER = logging.getLogger(__name__)
 
 async def async_setup_entry(hass, entry, async_add_entities):
-    __LOGGER.debug('async_setup_entry %s', entry.data)
-
     location = hass.data[DOMAIN][entry.entry_id]
 
     async_add_entities([YanziSensor(location, device, source) async for device, source in location.get_device_sources()])
@@ -27,8 +26,16 @@ class YanziSensor(Entity):
         async def filter_data(event):
             if event.data['key'] == self.source['key']:
                 self.source['latest'] = event.data['sample']
-
+                if self.source['variableName'] == 'uplog':
+                  self.device['lifeCycleState'] = self.source['latest']['deviceUpState']['name']
                 await self.async_update_ha_state()
+
+                # TODO: move to binary_sensor.py
+                if self.source['variableName'] == 'motion':
+                  # Trigger a new update when we expect the motion to be gone.
+                  await asyncio.sleep(60)
+                  await self.async_update_ha_state()
+
                 # self.async_write_ha_state()
 
         self.hass.bus.async_listen('yanzi_data', filter_data)
@@ -57,8 +64,10 @@ class YanziSensor(Entity):
         elif vn == 'pressure': return 'pressure'
         elif vn == 'illuminance': return 'illuminance'
         elif vn == 'battery': return 'battery'
+
+        #TODO: move to binary_sensor.py
+        elif vn == 'motion': return 'motion'
         # elif vn == 'soundPressureLevel': return l['sound']
-        # elif vn == 'motion': return l['timeLastMotion']
         # elif vn == 'uplog': return l['state']
         # elif vn == 'positionLog': return { 'longitude': l['longitude'], 'latitude': l['latitude'] }
 
@@ -89,7 +98,11 @@ class YanziSensor(Entity):
         vn = self.source['variableName']
         l = self.source['latest']
 
-        if vn == 'battery': return l['percentFull']
+        # SHould be in binarysensor
+        if vn == 'motion': return l['timeLastMotion'] / 1000 > time.time() - 60
+        elif vn == 'uplog': return l['deviceUpState']['name']
+        elif vn == 'positionLog': return l['longitude'], l['latitude']
+        elif vn == 'battery': return l['percentFull']
 
         return l['value'] if l and 'value' in l else None
 
@@ -107,6 +120,33 @@ class YanziSensor(Entity):
 
     @property
     def state_attributes(self):
+        if self.source['variableName'] == 'statistics':
+          # Grabbed from pan, not sure if still correct...
+          # uint8_t version;
+          # uint8_t parent_rssi; /* version > 0: Parent RSSI */
+          # uint16_t parent_switches; /* Number of parent switches */
+          # uint32_t parent_time; /* Time since last parent switch (seconds) */
+          # uint8_t parent[8]; /* 8 right most bytes of parent IP address*/
+          # uint16_t parent_rank; /* Rank of the parent */
+          # uint16_t parent_metric; /* Link metric to the parent */
+          # uint8_t free_routes;    /* version > 0: Number of free routes */
+          # uint8_t free_neighbors; /* version > 0: Number of free neighbors */
+          # uint8_t reserved_future[10];
+
+          res = struct.unpack('BBHIBBBBBBBBHHBBBBBBBBBBBB', bytes.fromhex(self.source['latest']['value']))
+          return {
+            'version': res[0],
+            'parent_rssi': res[1],
+            'parent_switches': res[2],
+            'parent_time': res[3],
+            'parent': res[4:12],
+            'parent_rank': res[12],
+            'parent_metric': res[13],
+            'free_routes': res[14],
+            'free_neighbors': res[15],
+            'reserved_future': res[16:]
+          }
+
         return self.source['latest']
 
 def get_device_class(variable_name):
