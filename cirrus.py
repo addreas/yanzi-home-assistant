@@ -8,33 +8,46 @@ import logging
 import websockets
 log = logging.getLogger(__name__)
 
+
 @contextlib.asynccontextmanager
 async def connect(uri, **kwargs):
     async with websockets.connect(uri, **kwargs) as ws:
         ws._uri = uri
         yield Cirrus(ws)
 
+
 class Cirrus:
+
     def __init__(self, ws):
         self.ws = ws
         self._current_message_id = 0
-        self.watchers = 0
+
+        self.consumers = []
+        self.producer = asyncio.create_task(self.producer())
+
+    async def producer(self):
+        try:
+            while True:
+                res = await self.ws.recv()
+                for q in self.consumers:
+                    await q.put(res)
+        except websockets.ConnectionClosedOK:
+            pass
 
     async def send_json(self, message):
-        # log.debug(message)
         await self.ws.send(json.dumps(message))
 
     async def send_binary(self, message):
         await self.ws.send(message)
 
     async def _watch(self, timeout):
-        self.watchers += 1
-        log.debug('currently %d watchers for %s', self.watchers, self.ws._uri)
-        while True:
-            try: 
-                yield await asyncio.wait_for(self.ws.recv(), timeout)
-            finally:
-                self.watchers -= 1
+        q = asyncio.Queue()
+        self.consumers.append(q)
+        try:
+            while True:
+                yield await asyncio.wait_for(q.get(), timeout)
+        finally:
+            self.consumers.remove(q)
 
     async def watch(self, timeout=None):
         async for message in self._watch(timeout):
@@ -82,22 +95,21 @@ class Cirrus:
         return response['sessionId']
 
     async def subscribe(self, subscribe_request):
-        log.debug('called subscribe for %s', self.ws._uri)
-        # async def send_subscribe():
-        #     response = await self.request(subscribe_request)
-        #     assert response['responseCode']['name'] == 'success'
-        #     await asyncio.sleep(response['expireTime']/1000 - time.time())
-        #     await asyncio.create_task(send_subscribe())
+        async def send_subscribe():
+            response = await self.request(subscribe_request)
+            assert response['responseCode']['name'] == 'success'
+            delay = response['expireTime'] / 1000 - time.time()
+            log.debug(
+                'Sending next subscribe request in %d seconds. (%d minutes)', delay, delay / 60)
+            await asyncio.sleep(delay)
+            await send_subscribe()
 
-        # subscription_task = asyncio.create_task(send_subscribe())
+        subscription_task = asyncio.create_task(send_subscribe())
 
         try:
             async for message in self.watch():
                 if message['messageType'] == 'SubscribeData':
-                    log.debug('SubscribeData')
                     yield message
-        except Exception as e:
+        finally:
             subscription_task.cancel()
-            raise e
-
-        log.debug('Exiting subscription')
+            log.debug('Exiting subscription')
