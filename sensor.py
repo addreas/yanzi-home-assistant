@@ -3,7 +3,7 @@ import struct
 
 from .const import DOMAIN
 from .binary_sensor import BINARY_VARIABLE_NAMES
-__LOGGER = logging.getLogger(__name__)
+from .yanzi_entity import YanziEntity
 
 async def async_setup_entry(hass, entry, async_add_entities):
     location = hass.data[DOMAIN][entry.entry_id]
@@ -33,12 +33,14 @@ class YanziSensor(YanziEntity):
         vn = self.source['variableName']
         l = self.source['latest']
 
-        if vn == 'uplog':
+        if vn == 'up':
             return l['deviceUpState']['name']
         elif vn == 'positionLog':
             return l['longitude'], l['latitude']
         elif vn == 'battery':
             return l['percentFull']
+        elif vn == 'soundPressureLevel':
+            return l['max']
         else:
             return l['value'] if l and 'value' in l else None
 

@@ -21,14 +21,16 @@ class YanziEntity(Entity):
                 self.source['latest'] = event.data['sample']
 
                 if self.source['variableName'] == 'uplog':
-                    self.device['lifeCycleState'] = self.source[
-                        'latest']['deviceUpState']['name']
+                    self.device['lifeCycleState'] = self.source['latest']['deviceUpState']['name']
 
                 await self.async_update_ha_state()
 
-                await self.on_sample(event.data['latest'])
+                await self.on_sample(self.source['latest'])
 
         self.hass.bus.async_listen('yanzi_data', filter_data)
+
+    async def on_sample(self, sample):
+        pass
 
     @property
     def should_poll(self):

@@ -1,12 +1,12 @@
 import asyncio
-import logging
 import time
 
 from .const import DOMAIN
 from .yanzi_entity import YanziEntity
-__LOGGER = logging.getLogger(__name__)
+from homeassistant.components.binary_sensor import BinarySensorDevice
 
 BINARY_VARIABLE_NAMES = [
+    'uplog',
     'motion'
 ]
 
@@ -14,16 +14,13 @@ async def async_setup_entry(hass, entry, async_add_entities):
     location = hass.data[DOMAIN][entry.entry_id]
 
     async_add_entities([
-        YanziSensor(location, device, source)
+        BinaryYanziSensor(location, device, source)
         async for device, source in location.get_device_sources()
         if source['variableName'] in BINARY_VARIABLE_NAMES
     ])
 
-log = logging.getLogger(__name__ + '.YanziSensor')
-
-
-class BinaryYanziSensor(YanziEntity):
-    async def on_sample(self):
+class BinaryYanziSensor(BinarySensorDevice, YanziEntity):
+    async def on_sample(self, sample):
         # We need to refresh ourselves after 60 seconds, since we use
         # time.time() in self.state
         await asyncio.sleep(60)
@@ -35,16 +32,18 @@ class BinaryYanziSensor(YanziEntity):
 
         if vn == 'motion':
             return 'motion'
+        elif vn == 'uplog':
+            return 'connectivity'
 
     @property
-    def state(self):
+    def is_on(self):
         vn = self.source['variableName']
         l = self.source['latest']
 
         if vn == 'motion':
             return l['timeLastMotion'] / 1000 > time.time() - 60
-        else:
-            return l['value'] if l and 'value' in l else None
+        elif vn  == 'uplog':
+            return l['deviceUpState']['name'] in ['up', 'goingUp']
 
     @property
     def state_attributes(self):
