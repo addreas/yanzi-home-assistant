@@ -15,6 +15,7 @@ async def async_setup_entry(hass, entry, async_add_entities):
 
     async_add_entities([YanziSensor(location, device, source) async for device, source in location.get_device_sources()])
 
+log = logging.getLogger(__name__ + '.YanziSensor')
 class YanziSensor(Entity):
     def __init__(self, location, device, source):
         self.location = location
@@ -22,11 +23,13 @@ class YanziSensor(Entity):
         self.source = source
 
     async def async_added_to_hass(self):
-        __LOGGER.debug('async_added_to_hass', self.source['key'])
-        async def filter_data(data):
-            if data['key'] == self.source['key']:
-                self.source['latest'] = sample
-                await self.async_write_ha_state()
+        log.debug('async_added_to_hass %s', self.source['key'])
+        async def filter_data(event):
+            if event.data['key'] == self.source['key']:
+                self.source['latest'] = event.data['sample']
+
+                await self.async_update_ha_state()
+                # self.async_write_ha_state()
 
         self.hass.bus.async_listen('yanzi_data', filter_data)
 
@@ -53,6 +56,7 @@ class YanziSensor(Entity):
         elif vn == 'volatileOrganicCompound': return 'volatile_organic_compounds'
         elif vn == 'pressure': return 'pressure'
         elif vn == 'illuminance': return 'illuminance'
+        elif vn == 'battery': return 'battery'
         # elif vn == 'soundPressureLevel': return l['sound']
         # elif vn == 'motion': return l['timeLastMotion']
         # elif vn == 'uplog': return l['state']
@@ -61,7 +65,9 @@ class YanziSensor(Entity):
 
     @property
     def unit_of_measurement(self):
-        return self.source['siUnit']
+        u = self.source['siUnit']
+        if u != 'NA':
+            return u
 
     @property
     def device_info(self):
@@ -83,17 +89,25 @@ class YanziSensor(Entity):
         vn = self.source['variableName']
         l = self.source['latest']
 
-        if vn == 'temperatureC': return l['temperature']
-        elif vn == 'temperatureK': return l['temperature']
-        elif vn == 'relativeHumidity': return l['humidity']
-        elif vn == 'carbonDioxide': return l['cO2']
-        elif vn == 'volatileOrganicCompound': return l['vOC']
-        elif vn == 'pressure': return l['pressure']
-        elif vn == 'illuminance': return l['illuminance']
-        elif vn == 'soundPressureLevel': return l['sound']
-        elif vn == 'motion': return l['timeLastMotion']
-        elif vn == 'uplog': return l['state']
-        elif vn == 'positionLog': return { 'longitude': l['longitude'], 'latitude': l['latitude'] }
+        if vn == 'battery': return l['percentFull']
+
+        return l['value'] if l and 'value' in l else None
+
+        # if vn == 'temperatureC': return l['temperature']
+        # elif vn == 'temperatureK': return l['value']
+        # elif vn == 'relativeHumidity': return l['humidity']
+        # elif vn == 'carbonDioxide': return l['cO2']
+        # elif vn == 'volatileOrganicCompound': return l['vOC']
+        # elif vn == 'pressure': return l['pressure']
+        # elif vn == 'illuminance': return l['illuminance']
+        # elif vn == 'soundPressureLevel': return l['sound']
+        # elif vn == 'motion': return l['timeLastMotion']
+        # elif vn == 'uplog': return l['state']
+
+
+    @property
+    def state_attributes(self):
+        return self.source['latest']
 
 def get_device_class(variable_name):
     return {

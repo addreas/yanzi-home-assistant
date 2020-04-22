@@ -27,15 +27,12 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
     hass.data[DOMAIN][entry.entry_id] = location
 
     for component in PLATFORMS:
-        hass.async_create_task(
-            hass.config_entries.async_forward_entry_setup(entry, component)
-        )
-    __LOGGER.debug('Setting up entry!!')
-    def notify(key, sample):
-        __LOGGER.debug('Data for ' + key)
-        hass.async_create_task(hass.bus.async_fire('yanzi_data', {'key': key, 'sample': sample}))
+            hass.async_create_task(hass.config_entries.async_forward_entry_setup(entry, component))
 
-    hass.async_create_task(location.watch(notify))
+    def notify(key, sample):
+        hass.bus.async_fire('yanzi_data', {'key': key, 'sample': sample})
+
+    location._hass_watcher_task = asyncio.create_task(location.watch(notify))
 
     return True
 
@@ -50,6 +47,7 @@ async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry):
         )
     )
     if unload_ok:
-        hass.data[DOMAIN].pop(entry.entry_id)
+        location = hass.data[DOMAIN].pop(entry.entry_id)
+        location._hass_watcher_task.cancel()
 
     return unload_ok
