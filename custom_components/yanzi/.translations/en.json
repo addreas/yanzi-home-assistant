@@ -1,0 +1,24 @@
+{
+    "config": {
+        "abort": {
+            "already_configured": "Location already configured."
+        },
+        "error": {
+            "cannot_connect": "Failed to connect, please try again",
+            "invalid_auth": "Invalid authentication",
+            "unknown": "Unexpected error"
+        },
+        "step": {
+            "user": {
+                "data": {
+                    "host": "Host",
+		    "username": "Username",
+		    "password": "Password",
+		    "location_id": "Location ID"
+                },
+                "title": "Connect to a location."
+            }
+        },
+        "title": "Yanzi location"
+    }
+}
