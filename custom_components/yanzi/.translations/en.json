@@ -1,24 +1,25 @@
 {
-    "config": {
-        "abort": {
-            "already_configured": "Location already configured."
+  "config": {
+    "abort": {
+      "already_configured": "Location already configured."
+    },
+    "error": {
+      "cannot_connect": "Failed to connect, please try again",
+      "invalid_auth": "Invalid authentication",
+      "invalid_location": "Unable to find location with that ID",
+      "unknown": "Unexpected error"
+    },
+    "step": {
+      "user": {
+        "data": {
+          "host": "Host",
+          "username": "Username",
+          "password": "Password",
+          "location_id": "Location ID"
         },
-        "error": {
-            "cannot_connect": "Failed to connect, please try again",
-            "invalid_auth": "Invalid authentication",
-            "unknown": "Unexpected error"
-        },
-        "step": {
-            "user": {
-                "data": {
-                    "host": "Host",
-		    "username": "Username",
-		    "password": "Password",
-		    "location_id": "Location ID"
-                },
-                "title": "Connect to a location."
-            }
-        },
-        "title": "Yanzi location"
-    }
+        "title": "Connect to a Yanzi location."
+      }
+    },
+    "title": "Yanzi"
+  }
 }
