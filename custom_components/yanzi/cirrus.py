@@ -111,7 +111,7 @@ class Cirrus:
             async for message in self.watch():
                 if message['messageType'] == 'SubscribeData':
                     yield message
-                if subscription_task:
+                if subscription_task.done():
                     raise subscription_task.exception()
         finally:
             subscription_task.cancel()
