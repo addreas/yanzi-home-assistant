@@ -97,7 +97,7 @@ class Cirrus:
     async def subscribe(self, subscribe_request):
         async def send_subscribe():
             response = await self.request(subscribe_request)
-            if response['responseCode']['name'] == 'success':
+            if response['responseCode']['name'] != 'success':
                 raise RuntimeError(f'Error when sending SubscribeRequest to cirrus: {response}')
             delay = response['expireTime'] / 1000 - time.time()
             log.debug(
