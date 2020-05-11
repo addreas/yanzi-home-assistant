@@ -38,7 +38,7 @@ class YanziSensor(YanziEntity):
         elif vn == 'positionLog':
             return l['longitude'], l['latitude']
         elif vn == 'battery':
-            return l['percentFull']
+            return int(l['percentFull'])
         elif vn == 'soundPressureLevel':
             return l['max']
         else:
