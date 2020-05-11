@@ -32,6 +32,9 @@ class YanziSensor(YanziEntity):
     def state(self):
         vn = self.source['variableName']
         l = self.source['latest']
+        
+        if l is None:
+            return None
 
         if vn == 'up':
             return l['deviceUpState']['name']
