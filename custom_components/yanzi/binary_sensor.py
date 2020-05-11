@@ -39,6 +39,9 @@ class BinaryYanziSensor(BinarySensorDevice, YanziEntity):
     def is_on(self):
         vn = self.source['variableName']
         l = self.source['latest']
+        
+        if l is None:
+            return None
 
         if vn == 'motion':
             return l['timeLastMotion'] / 1000 > time.time() - 60
