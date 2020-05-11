@@ -13,26 +13,51 @@ log = logging.getLogger(__name__)
 async def connect(uri, **kwargs):
     async with websockets.connect(uri, **kwargs) as ws:
         ws._uri = uri
-        yield Cirrus(ws)
+        async with Cirrus(ws) as ws:
+            yield ws
 
 
 class Cirrus:
-
     def __init__(self, ws):
         self.ws = ws
         self._current_message_id = 0
 
-        self.consumers = []
-        self.producer = asyncio.create_task(self.producer())
+        self._consumers = []
+        self.exception = None
 
-    async def producer(self):
+    async def __aenter__(self):
+        self._producer_task = asyncio.create_task(self._producer())
+        self._periodic_task = asyncio.create_task(self._periodic())
+
+        return self
+
+    async def __aexit__(self, *args, **kwargs):
+        self._producer_task.cancel()
+        self._periodic_task.cancel()
+
+    async def _producer(self):
         try:
             while True:
                 res = await self.ws.recv()
-                for q in self.consumers:
-                    await q.put(res)
+                await self._put(res)
         except websockets.ConnectionClosedOK:
             pass
+        except Exception as e:
+            self.exception = e
+
+    async def _periodic(self):
+        try:
+            while True:
+                response = await self.request({'messageType': 'PeriodicRequest'})
+                await asyncio.sleep(30)
+                if response['responseCode']['name'] != 'success':
+                    raise RuntimeError(f'PeriodicRequest failed: {response}')
+        except Exception as e:
+            self.exception = e
+
+    async def _put(self, res):
+        for q in self._consumers:
+            await q.put(res)
 
     async def send_json(self, message):
         await self.ws.send(json.dumps(message))
@@ -42,17 +67,21 @@ class Cirrus:
 
     async def _watch(self, timeout):
         q = asyncio.Queue()
-        self.consumers.append(q)
+        self._consumers.append(q)
         try:
             while True:
-                yield await asyncio.wait_for(q.get(), timeout)
+                item = await asyncio.wait_for(q.get(), timeout)
+
+                if self.exception:
+                    raise self.exception
+                else:
+                    yield item
         finally:
-            self.consumers.remove(q)
+            self._consumers.remove(q)
 
     async def watch(self, timeout=None):
         async for message in self._watch(timeout):
             if type(message) is str:
-                # log.debug(message)
                 yield json.loads(message)
 
     async def watch_binary(self, timeout=None):
@@ -61,13 +90,13 @@ class Cirrus:
                 yield message
 
     async def send(self, request, timeout=30):
-        message_id = self._current_message_id
+        message_id = str(self._current_message_id)
         self._current_message_id += 1
         extended_request = {
             **request,
             'messageIdentifier': {
                 'resourceType': 'MessageIdentifier',
-                'messageId': str(message_id)
+                'messageId': message_id
             }
         }
 
@@ -76,7 +105,7 @@ class Cirrus:
         response_count = 0
         try:
             async for response in self.watch(timeout):
-                if response['messageIdentifier']['messageId'] == str(message_id):
+                if response['messageIdentifier']['messageId'] == message_id:
                     response_count += 1
                     yield response
 
@@ -89,21 +118,21 @@ class Cirrus:
             return response
 
     async def authenticate(self, credentials):
-        response = await self.request({'messageType': 'LoginRequest', **credentials})
+        response = await self.request({'messageType': 'LoginRequest', **credentials}, 30)
         session_id = response.get('sessionId')
         self.session_id = session_id
         return session_id
 
     async def subscribe(self, subscribe_request):
         async def send_subscribe():
-            response = await self.request(subscribe_request)
-            if response['responseCode']['name'] != 'success':
-                raise RuntimeError(f'Error when sending SubscribeRequest to cirrus: {response}')
-            delay = response['expireTime'] / 1000 - time.time()
-            log.debug(
-                'Sending next subscribe request in %d seconds. (%d minutes)', delay, delay / 60)
-            await asyncio.sleep(delay)
-            await send_subscribe()
+            while True:
+                response = await self.request(subscribe_request)
+                if response['responseCode']['name'] != 'success':
+                    raise RuntimeError(f'Error when sending SubscribeRequest to cirrus: {response}')
+                delay = response['expireTime'] / 1000 - time.time()
+                log.debug(
+                    'Sending next subscribe request in %d seconds. (%d minutes)', delay, delay / 60)
+                await asyncio.sleep(delay)
 
         subscription_task = asyncio.create_task(send_subscribe())
 

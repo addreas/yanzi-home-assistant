@@ -34,6 +34,9 @@ class YanziLocation:
                 'isLS': False
             })
 
+            if 'result' not in gql_response:
+                raise RuntimeError(f'Failed to get list of devices: {gql_response}')
+
             location = json.loads(gql_response['result'])['data']['location']
 
             if location['units']['cursor'] != location['units']['endCursor']:
