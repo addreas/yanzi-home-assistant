@@ -32,13 +32,16 @@ class YanziSensor(YanziEntity):
     def state(self):
         vn = self.source['variableName']
         l = self.source['latest']
+        
+        if l is None:
+            return None
 
         if vn == 'up':
             return l['deviceUpState']['name']
         elif vn == 'positionLog':
             return l['longitude'], l['latitude']
         elif vn == 'battery':
-            return l['percentFull']
+            return int(l['percentFull'])
         elif vn == 'soundPressureLevel':
             return l['max']
         else:
