@@ -3,7 +3,7 @@ import time
 
 from .const import DOMAIN
 from .yanzi_entity import YanziEntity
-from homeassistant.components.binary_sensor import BinarySensorDevice
+from homeassistant.components.binary_sensor import BinarySensorEntity
 
 BINARY_VARIABLE_NAMES = [
     'uplog',
@@ -19,7 +19,7 @@ async def async_setup_entry(hass, entry, async_add_entities):
         if source['variableName'] in BINARY_VARIABLE_NAMES
     ])
 
-class BinaryYanziSensor(BinarySensorDevice, YanziEntity):
+class BinaryYanziSensor(BinarySensorEntity, YanziEntity):
     async def on_sample(self, sample):
         # We need to refresh ourselves after 60 seconds, since we use
         # time.time() in self.state
