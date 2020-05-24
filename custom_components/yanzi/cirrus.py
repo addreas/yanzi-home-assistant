@@ -105,7 +105,9 @@ class Cirrus:
         response_count = 0
         try:
             async for response in self.watch(timeout):
-                if response['messageIdentifier']['messageId'] == message_id:
+                if 'messageIdentifier' not in response:
+                    log.debug('Ignoring response without messageIdentifier: %s', response)
+                elif response['messageIdentifier']['messageId'] == message_id:
                     response_count += 1
                     yield response
 
