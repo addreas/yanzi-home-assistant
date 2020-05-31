@@ -139,7 +139,7 @@ class Cirrus:
         subscription_task = asyncio.create_task(send_subscribe())
 
         try:
-            async for message in self.watch():
+            async for message in self.watch(timeout=60):
                 if message['messageType'] == 'SubscribeData':
                     yield message
                 if subscription_task.done():
