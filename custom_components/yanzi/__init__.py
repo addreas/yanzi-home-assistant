@@ -23,18 +23,25 @@ async def async_setup(hass: HomeAssistant, config: dict):
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
     """Set up yanzi from a config entry."""
-    location = YanziLocation(entry.data['host'], entry.data[
-                             'access_token'], entry.data['location_id'])
+
+    location = YanziLocation(
+        entry.data['host'],
+        entry.data['access_token'],
+        entry.data['location_id'])
+
     hass.data[DOMAIN][entry.entry_id] = location
 
     for component in PLATFORMS:
         hass.async_create_task(
             hass.config_entries.async_forward_entry_setup(entry, component))
 
-    def notify(key, sample):
-        hass.bus.async_fire('yanzi_data', {'key': key, 'sample': sample})
+    async def watch():
+        counter_key = 'yanzi.sample_counter_' + entry.data['location_id']
+        async for count, (key, sample) in enumerate(location.watch()):
+            hass.bus.async_fire('yanzi_data', {'key': key, 'sample': sample})
+            hass.states.async_set(counter_key, count)
 
-    location._hass_watcher_task = asyncio.create_task(location.watch(notify))
+    location._hass_watcher_task = asyncio.create_task(watch())
 
     return True
 

@@ -68,13 +68,14 @@ class YanziLocation:
 
                         yield device, source
 
-    async def watch(self, notify_update=lambda key, sample: None):
+    async def watch(self):
         log.debug('Starting watch')
         while True:
             try:
                 async with connect(f'wss://{self.host}/cirrusAPI?two') as ws:
                     await ws.authenticate({'accessToken': self.access_token})
-                    async for message in ws.subscribe({
+
+                    subscribe_request = {
                         'messageType': 'SubscribeRequest',
                         'unitAddress': {
                             'resourceType': 'UnitAddress',
@@ -84,10 +85,30 @@ class YanziLocation:
                             'resourceType': 'SubscriptionType',
                             'name': 'data'
                         },
-                    }):
-                        key = dsa_to_key(message['list'][0][
-                                         'dataSourceAddress'])
-                        notify_update(key, message['list'][0]['list'][0])
+                    }
+
+                    async for message in ws.subscribe(subscribe_request):
+
+                        dsa = message['list'][0]['dataSourceAddress']
+                        key = dsa_to_key(dsa)
+                        sample = message['list'][0]['list'][0]
+
+                        yield key, sample
+
+                        if dsa['variableName']['name'] == 'temperatureK':
+                            god_damn_it_dsa = {
+                                **dsa,
+                                'variableName': {
+                                    **dsa['variableName'],
+                                    'name': 'temperatureC'
+                                }
+                            }
+                            god_damn_it_sample = {
+                                **sample,
+                                'value': sample['value'] - 273.15
+                            }
+
+                            yield god_damn_it_dsa, god_damn_it_sample
 
             except CancelledError:
                 await asyncio.sleep(1)

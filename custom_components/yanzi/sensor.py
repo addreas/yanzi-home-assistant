@@ -26,13 +26,13 @@ class YanziSensor(YanziEntity):
     def unit_of_measurement(self):
         u = self.source['siUnit']
 
-        return u if u != 'NA' else None
+        return SI_UNITS.get(u, u)
 
     @property
     def state(self):
         vn = self.source['variableName']
         l = self.source['latest']
-        
+
         if l is None:
             return None
 
@@ -88,4 +88,10 @@ DEVICE_CLASSES = {
     'pressure': 'pressure',
     'illuminance': 'illuminance',
     'battery': 'battery',
+}
+
+SI_UNITS = {
+    'NA': None,
+    'celcius': '°C',
+    'kelvin': 'K',
 }
