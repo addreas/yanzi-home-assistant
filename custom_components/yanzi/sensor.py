@@ -25,8 +25,9 @@ class YanziSensor(YanziEntity):
     @property
     def unit_of_measurement(self):
         u = self.source['siUnit']
+        vn = self.source['variableName']
 
-        return SI_UNITS.get(u, u)
+        return UNIT_BY_VARIABLE_NAME.get(vn, SI_UNITS.get(u, u))
 
     @property
     def state(self):
@@ -92,6 +93,10 @@ DEVICE_CLASSES = {
 
 SI_UNITS = {
     'NA': None,
-    'celcius': '°C',
+    'celsius': '°C',
     'kelvin': 'K',
+}
+
+UNIT_BY_VARIABLE_NAME = {
+    'battery': '%'
 }
