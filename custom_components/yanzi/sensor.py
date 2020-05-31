@@ -95,6 +95,7 @@ SI_UNITS = {
     'NA': None,
     'celsius': '°C',
     'kelvin': 'K',
+    'percent': '%'
 }
 
 UNIT_BY_VARIABLE_NAME = {
