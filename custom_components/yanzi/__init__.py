@@ -37,8 +37,10 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
 
     async def watch():
         counter_key = 'yanzi.sample_counter_' + entry.data['location_id']
-        async for count, (key, sample) in enumerate(location.watch()):
+        count = 0
+        async for key, sample in location.watch():
             hass.bus.async_fire('yanzi_data', {'key': key, 'sample': sample})
+            count = count + 1
             hass.states.async_set(counter_key, count)
 
     location._hass_watcher_task = asyncio.create_task(watch())
