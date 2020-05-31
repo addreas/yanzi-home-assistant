@@ -128,6 +128,7 @@ class Cirrus:
     async def subscribe(self, subscribe_request):
         async def send_subscribe():
             while True:
+                log.debug('Sending subscribe request.')
                 response = await self.request(subscribe_request)
                 if response['responseCode']['name'] != 'success':
                     raise RuntimeError(f'Error when sending SubscribeRequest to cirrus: {response}')
