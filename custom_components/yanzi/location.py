@@ -90,25 +90,24 @@ class YanziLocation:
                     async for message in ws.subscribe(subscribe_request):
 
                         dsa = message['list'][0]['dataSourceAddress']
-                        key = dsa_to_key(dsa)
                         sample = message['list'][0]['list'][0]
 
-                        yield key, sample
+                        yield dsa_to_key(dsa), sample
 
                         if dsa['variableName']['name'] == 'temperatureK':
-                            god_damn_it_dsa = {
+                            emulated_dsa = {
                                 **dsa,
                                 'variableName': {
                                     **dsa['variableName'],
                                     'name': 'temperatureC'
                                 }
                             }
-                            god_damn_it_sample = {
+                            emulated_sample = {
                                 **sample,
                                 'value': sample['value'] - 273.15
                             }
 
-                            yield god_damn_it_dsa, god_damn_it_sample
+                            yield dsa_to_key(emulated_dsa), emulated_sample
 
             except CancelledError:
                 await asyncio.sleep(1)
