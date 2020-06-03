@@ -104,7 +104,7 @@ class YanziLocation:
                             }
                             emulated_sample = {
                                 **sample,
-                                'value': sample['value'] - 273.15
+                                'value': round(sample['value'] - 273.15, 2)
                             }
 
                             yield dsa_to_key(emulated_dsa), emulated_sample
