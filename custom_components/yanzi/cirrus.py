@@ -49,7 +49,7 @@ class Cirrus:
         try:
             while True:
                 response = await self.request({'messageType': 'PeriodicRequest'})
-                await asyncio.sleep(30)
+                await asyncio.sleep(120)
                 if response['responseCode']['name'] != 'success':
                     raise RuntimeError(f'PeriodicRequest failed: {response}')
         except Exception as e:
