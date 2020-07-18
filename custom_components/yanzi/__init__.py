@@ -36,7 +36,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
             hass.config_entries.async_forward_entry_setup(entry, component))
 
     async def watch():
-        counter_key = 'yanzi.sample_counter_' + entry.data['location_id']
+        counter_key = 'sensor.yanzi_sample_counter_' + entry.data['location_id']
         count = 0
         async for key, sample in location.watch():
             hass.bus.async_fire('yanzi_data', {'key': key, 'sample': sample})
