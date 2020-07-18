@@ -13,6 +13,8 @@ class YanziEntity(Entity):
         self.location = location
         self.device = device
         self.source = source
+        
+        device.get('_entities', []).append(self)
 
     async def async_added_to_hass(self):
         log.debug('async_added_to_hass %s', self.source['key'])
@@ -27,6 +29,9 @@ class YanziEntity(Entity):
                         self.device['lifeCycleState'] = 'present'
                     else:
                         self.device['lifeCycleState'] = 'shadow'
+                    
+                    for entity in self.device['_entities']:
+                        await entity.async_update_ha_state()
 
                 await self.async_update_ha_state()
                 await self.on_sample(self.source['latest'])
