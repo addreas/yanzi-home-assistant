@@ -52,7 +52,7 @@ class YanziEntity(Entity):
     @property
     def device_info(self):
         return {
-            "identifiers": {(DOMAIN, self.device['key'])},
+            "identifiers": {(DOMAIN, self.device['key']), (DOMAIN, self.device['unitAddress']['did'])},
             "name": self.device['name'],
             "manufacturer": "Yanzi Networks",
             "model": get_device_model(self.device['productType']),
@@ -60,9 +60,9 @@ class YanziEntity(Entity):
             # "via_device": (DOMAIN, self.device['unitAddress']['serverDid']),
         }
 
-    @property
-    def available(self):
-        return self.device['lifeCycleState'] == 'present'
+#    @property
+#    def available(self):
+#        return self.device['lifeCycleState'] == 'present'
 
 
 def get_device_model(product_type):
