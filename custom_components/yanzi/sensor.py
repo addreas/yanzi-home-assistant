@@ -50,9 +50,7 @@ class YanziSensor(YanziEntity):
 
     @property
     def state_attributes(self):
-        if self.source['latest'] is None:
-            return None
-        if self.source['variableName'] == 'statistics':
+        if self.source['variableName'] == 'statistics' and self.source['latest'] is not None:
             # Grabbed from pan, not sure if still correct...
             # uint8_t version;
             # uint8_t parent_rssi; /* version > 0: Parent RSSI */
