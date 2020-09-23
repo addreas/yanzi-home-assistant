@@ -57,6 +57,7 @@ class YanziLocation:
                     source['name'] = device['name']
                     source['unitTypeFixed'] = 'physicalOrChassis'
                     #source['latest'] = await self.get_latest(ws, device['unitAddress']['did'], source['variableName'])
+                    source['latest'] = None
 
                     yield device, source
 
@@ -65,6 +66,7 @@ class YanziLocation:
                         source['name'] = device['name']
                         source['unitTypeFixed'] = child['unitTypeFixed']
                         #source['latest'] = await self.get_latest(ws, child['unitAddress']['did'], source['variableName'])
+                        source['latest'] = None
 
                         yield device, source
 
