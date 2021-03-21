@@ -15,6 +15,7 @@ class YanziEntity(Entity):
 
     async def async_added_to_hass(self):
         log.debug('async_added_to_hass %s', self.source['key'])
+
         async def filter_data(event):
             if event.data['key'] == self.source['key']:
                 self.source['latest'] = event.data['sample']

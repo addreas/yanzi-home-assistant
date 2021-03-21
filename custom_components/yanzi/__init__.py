@@ -16,10 +16,12 @@ CONFIG_SCHEMA = vol.Schema({DOMAIN: vol.Schema({})}, extra=vol.ALLOW_EXTRA)
 # For your initial PR, limit it to 1 platform.
 PLATFORMS = ['sensor', 'binary_sensor']
 
+
 async def async_setup(hass: HomeAssistant, config: dict):
     """Set up the yanzi component."""
     hass.data[DOMAIN] = {}
     return True
+
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
     """Set up yanzi from a config entry."""
@@ -32,12 +34,14 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
     hass.data[DOMAIN][entry.entry_id] = location
 
     async def watch():
-        counter_key = 'sensor.yanzi_sample_counter_' + entry.data['location_id']
+        counter_key = 'sensor.yanzi_sample_counter_' + \
+            entry.data['location_id']
         count = 0
         async for key, sample in location.watch():
             hass.bus.async_fire('yanzi_data', {'key': key, 'sample': sample})
             count = count + 1
-            hass.states.async_set(counter_key, count, {'unit_of_measurement': 'samples'})
+            hass.states.async_set(counter_key, count, {
+                                  'unit_of_measurement': 'samples'})
 
     location._hass_watcher_task = asyncio.create_task(watch())
 
@@ -47,6 +51,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
             hass.config_entries.async_forward_entry_setup(entry, component))
 
     return True
+
 
 async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry):
     """Unload a config entry."""

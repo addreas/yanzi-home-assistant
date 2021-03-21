@@ -32,6 +32,7 @@ async def validate_input(host, username, password):
         else:
             return session_id
 
+
 async def get_access_token(host, session_id, location_id):
     async with connect(f'wss://{host}/cirrusAPI') as ws:
         await ws.authenticate({'sessionId': session_id})
@@ -47,10 +48,11 @@ async def get_access_token(host, session_id, location_id):
 
         return base64.b64decode(response['list'][0]['blobData']).decode()
 
+
 async def get_location_name(host, session_id, location_id):
     async with connect(f'wss://{host}/cirrusAPI') as ws:
         await ws.authenticate({'sessionId': session_id})
-        async for response in ws.send({ 'messageType': 'GetLocationsRequest' }):
+        async for response in ws.send({'messageType': 'GetLocationsRequest'}):
             for location in response['list']:
                 if location['locationAddress']['locationId'] == location_id:
                     return location['name']
@@ -108,6 +110,7 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
 class InvalidAuth(exceptions.HomeAssistantError):
     '''Error to indicate there is invalid auth.'''
+
 
 class InvalidLocation(exceptions.HomeAssistantError):
     '''Error to indicate that the location was not found.'''

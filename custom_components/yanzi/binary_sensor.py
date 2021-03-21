@@ -10,6 +10,7 @@ BINARY_VARIABLE_NAMES = [
     'motion'
 ]
 
+
 async def async_setup_entry(hass, entry, async_add_entities):
     location = hass.data[DOMAIN][entry.entry_id]
 
@@ -18,6 +19,7 @@ async def async_setup_entry(hass, entry, async_add_entities):
         for device, source in location.device_sources
         if source['variableName'] in BINARY_VARIABLE_NAMES
     ])
+
 
 class BinaryYanziSensor(BinarySensorEntity, YanziEntity):
     async def on_sample(self, sample):
@@ -45,7 +47,7 @@ class BinaryYanziSensor(BinarySensorEntity, YanziEntity):
 
         if vn == 'motion':
             return l['timeLastMotion'] / 1000 > time.time() - 60
-        elif vn  == 'uplog':
+        elif vn == 'uplog':
             return l['deviceUpState']['name'] in ['up', 'goingUp']
 
     @property

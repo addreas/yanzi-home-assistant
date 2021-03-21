@@ -106,7 +106,8 @@ class Cirrus:
         try:
             async for response in self.watch(timeout):
                 if 'messageIdentifier' not in response:
-                    log.debug('Ignoring response without messageIdentifier: %s', response)
+                    log.debug(
+                        'Ignoring response without messageIdentifier: %s', response)
                 elif response['messageIdentifier']['messageId'] == message_id:
                     response_count += 1
                     yield response
@@ -131,7 +132,8 @@ class Cirrus:
                 log.debug('Sending subscribe request.')
                 response = await self.request(subscribe_request)
                 if response['responseCode']['name'] != 'success':
-                    raise RuntimeError(f'Error when sending SubscribeRequest to cirrus: {response}')
+                    raise RuntimeError(
+                        f'Error when sending SubscribeRequest to cirrus: {response}')
                 delay = response['expireTime'] / 1000 - time.time()
                 log.debug(
                     'Sending next subscribe request in %d seconds. (%d minutes)', delay, delay / 60)

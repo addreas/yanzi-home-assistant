@@ -88,6 +88,7 @@ class YanziSensor(YanziEntity):
 
         return self.source['latest']
 
+
 DEVICE_CLASSES = {
     'temperatureC': 'temperature',
     'temperatureK': 'temperature',
