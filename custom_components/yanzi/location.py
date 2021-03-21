@@ -18,13 +18,10 @@ class YanziLocation:
 
         self.device_sources = {}
 
-    async def get_device_sources(self, get_latest):
-        self.device_sources = list(await self._get_device_sources(get_latest))
+    async def get_device_sources(self):
+        self.device_sources = list(await self._get_device_sources())
 
-    async def _get_device_sources(self, get_latest):
-        location_address = {
-            'resourceType': 'LocationAddress', 'locationId': self.location_id}
-
+    async def _get_device_sources(self):
         async with connect(f"wss://{self.host}/cirrusAPI?get_device_sources") as ws:
             await ws.authenticate({'accessToken': self.access_token})
 

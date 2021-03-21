@@ -1,12 +1,10 @@
 import asyncio
 import struct
-from datetime import timedelta
 
 from .const import DOMAIN
 from .binary_sensor import BINARY_VARIABLE_NAMES
 from .yanzi_entity import YanziEntity
 
-SCAN_INTERVAL = timedelta(minutes=10)
 
 async def async_setup_entry(hass, entry, async_add_entities):
     location = hass.data[DOMAIN][entry.entry_id]
