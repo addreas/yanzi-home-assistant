@@ -17,12 +17,14 @@ class YanziLocation:
         self.location_id = location_id
 
         self.device_sources = {}
+        self._socket = asyncio.Future()
 
     async def get_device_sources(self):
         self.device_sources = [x async for x in self._get_device_sources()]
 
     async def _get_device_sources(self):
-        gql_response = await self._ws.request({
+        ws = await self._socket
+        gql_response = await ws.request({
             'messageType': 'GraphQLRequest',
             'locationAddress': {
                 'resourceType': 'LocationAddress',
@@ -74,7 +76,7 @@ class YanziLocation:
             try:
                 async with connect(f'wss://{self.host}/cirrusAPI') as ws:
                     await ws.authenticate({'accessToken': self.access_token})
-                    self._ws = ws
+                    self._socket.set_result(ws)
 
                     subscribe_request = {
                         'messageType': 'SubscribeRequest',
@@ -111,17 +113,18 @@ class YanziLocation:
                             yield dsa_to_key(emulated_dsa), emulated_sample
 
             except CancelledError:
-                self._ws = None
+                self._socket = asyncio.Future()
                 await asyncio.sleep(1)
                 break
             except Exception as e:
-                self._ws = None
+                self._socket = asyncio.Future()
                 log.warning(
                     'Restarting ws watch in 10 seconds because of: %s', e, exc_info=e)
                 await asyncio.sleep(10)
 
     async def get_latest(self, did, variable_name):
-        response = await self._ws.request({
+        ws = await self._socket
+        response = await ws.request({
             'messageType': 'GetSamplesRequest',
             'dataSourceAddress': {
                 'resourceType': 'DataSourceAddress',
