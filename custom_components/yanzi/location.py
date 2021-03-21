@@ -19,7 +19,7 @@ class YanziLocation:
         self.device_sources = {}
 
     async def get_device_sources(self):
-        self.device_sources = list(await self._get_device_sources())
+        self.device_sources = [x async for x in self._get_device_sources()]
 
     async def _get_device_sources(self):
         async with connect(f"wss://{self.host}/cirrusAPI?get_device_sources") as ws:
