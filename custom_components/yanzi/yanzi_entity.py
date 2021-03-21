@@ -64,9 +64,9 @@ class YanziEntity(Entity):
             # "via_device": (DOMAIN, self.device['unitAddress']['serverDid']),
         }
 
-#    @property
-#    def available(self):
-#        return self.device['lifeCycleState'] == 'present'
+    @property
+    def available(self):
+        return self.device['lifeCycleState'] != 'shadow'
 
 
 def get_device_model(product_type):
