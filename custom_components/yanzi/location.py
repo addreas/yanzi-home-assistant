@@ -141,10 +141,10 @@ class YanziLocation:
                 'numberOfSamplesBeforeStart': 1,
             }
         })
-        res = response['sampleListDto'].get('list', [None])[0]
-        if res is None:
-            log.warning('Got None sample %s', response)
-        return res
+        if 'sampleListDto' not in response or 'list' not in response['sampleListDto'] or len(response['sampleListDto']['list']) < 1:
+            log.warning('Malformed sample %s', response)
+            return None
+        return response['sampleListDto']['list'][0]
 
 
 def dsa_to_key(dsa):
