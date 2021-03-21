@@ -142,7 +142,7 @@ class YanziLocation:
             }
         })
         if 'sampleListDto' not in response or 'list' not in response['sampleListDto'] or len(response['sampleListDto']['list']) < 1:
-            log.warning('Malformed sample %s', response)
+            log.warning('Malformed sample for %s/%s %s', did, variable_name, response)
             return None
         return response['sampleListDto']['list'][0]
 
