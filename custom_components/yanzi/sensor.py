@@ -13,7 +13,7 @@ async def async_setup_entry(hass, entry, async_add_entities):
 
     async_add_entities([
         YanziSensor(location, device, source)
-        async for device, source in location.device_sources
+        for device, source in location.device_sources
         if source['variableName'] not in BINARY_VARIABLE_NAMES
     ])
 
