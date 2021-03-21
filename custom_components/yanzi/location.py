@@ -22,59 +22,57 @@ class YanziLocation:
         self.device_sources = [x async for x in self._get_device_sources()]
 
     async def _get_device_sources(self):
-        async with connect(f"wss://{self.host}/cirrusAPI?get_device_sources") as ws:
-            await ws.authenticate({'accessToken': self.access_token})
+        gql_response = await self._ws.request({
+            'messageType': 'GraphQLRequest',
+            'locationAddress': {
+                'resourceType': 'LocationAddress',
+                'locationId': self.location_id,
+            },
+            'query': qq_query,
+            'vars': {},
+            'isLS': False
+        })
 
-            gql_response = await ws.request({
-                'messageType': 'GraphQLRequest',
-                'locationAddress': {
-                    'resourceType': 'LocationAddress',
-                    'locationId': self.location_id,
-                },
-                'query': qq_query,
-                'vars': {},
-                'isLS': False
-            })
+        if 'result' not in gql_response:
+            raise RuntimeError(
+                f'Failed to get list of devices: {gql_response}')
 
-            if 'result' not in gql_response:
-                raise RuntimeError(f'Failed to get list of devices: {gql_response}')
+        location = json.loads(gql_response['result'])['data']['location']
 
-            location = json.loads(gql_response['result'])['data']['location']
+        if location['units']['cursor'] != location['units']['endCursor']:
+            raise RuntimeError(
+                'Im unable to handle multiple pages of sensors.')
 
-            if location['units']['cursor'] != location['units']['endCursor']:
-                raise RuntimeError(
-                    'Im unable to handle multiple pages of sensors.')
+        key_to_version = {item['key']: item['version']
+                          for item in location['inventory']['list']}
 
-            key_to_version = {item['key']: item['version']
-                              for item in location['inventory']['list']}
+        for device in location['units']['list']:
+            device['version'] = key_to_version[device['key']]
 
-            for device in location['units']['list']:
-                device['version'] = key_to_version[device['key']]
+            for source in device['dataSources']:
+                if source['variableName'] in ['log', 'unitState']:
+                    # These two are always null for physical devices?
+                    continue
 
-                for source in device['dataSources']:
-                    if source['variableName'] in ['log', 'unitState']:
-                        # These two are always null for physical devices?
-                        continue
+                source['name'] = device['name']
+                source['unitTypeFixed'] = 'physicalOrChassis'
+                source['latest'] = None
 
+                yield device, source
+
+            for child in device['chassisChildren']:
+                for source in child['dataSources']:
                     source['name'] = device['name']
-                    source['unitTypeFixed'] = 'physicalOrChassis'
+                    source['unitTypeFixed'] = child['unitTypeFixed']
                     source['latest'] = None
 
                     yield device, source
-
-                for child in device['chassisChildren']:
-                    for source in child['dataSources']:
-                        source['name'] = device['name']
-                        source['unitTypeFixed'] = child['unitTypeFixed']
-                        source['latest'] = None
-
-                        yield device, source
 
     async def watch(self):
         log.debug('Starting watch')
         while True:
             try:
-                async with connect(f'wss://{self.host}/cirrusAPI?watch') as ws:
+                async with connect(f'wss://{self.host}/cirrusAPI') as ws:
                     await ws.authenticate({'accessToken': self.access_token})
                     self._ws = ws
 
@@ -154,6 +152,7 @@ def dsa_to_key(dsa):
     instance_number = dsa['instanceNumber']
 
     return f'{gwdid}/{location_id}/{did}/{variable_name}/{instance_number}'
+
 
 qq_query = '''query {
   location {

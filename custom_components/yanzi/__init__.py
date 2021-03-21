@@ -31,11 +31,6 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
 
     hass.data[DOMAIN][entry.entry_id] = location
 
-    await location.get_device_sources()
-    for component in PLATFORMS:
-        hass.async_create_task(
-            hass.config_entries.async_forward_entry_setup(entry, component))
-
     async def watch():
         counter_key = 'sensor.yanzi_sample_counter_' + entry.data['location_id']
         count = 0
@@ -45,6 +40,11 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
             hass.states.async_set(counter_key, count, {'unit_of_measurement': 'samples'})
 
     location._hass_watcher_task = asyncio.create_task(watch())
+
+    await location.get_device_sources()
+    for component in PLATFORMS:
+        hass.async_create_task(
+            hass.config_entries.async_forward_entry_setup(entry, component))
 
     return True
 

@@ -8,7 +8,6 @@ log = logging.getLogger(__name__)
 
 
 class YanziEntity(Entity):
-
     def __init__(self, location, device, source):
         self.location = location
         self.device = device
