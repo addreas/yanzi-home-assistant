@@ -15,7 +15,7 @@ async def async_setup_entry(hass, entry, async_add_entities):
 
     async_add_entities([
         BinaryYanziSensor(location, device, source)
-        async for device, source in location.get_device_sources()
+        async for device, source in location.device_sources
         if source['variableName'] in BINARY_VARIABLE_NAMES
     ])
 

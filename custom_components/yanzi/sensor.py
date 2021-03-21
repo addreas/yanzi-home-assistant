@@ -1,21 +1,34 @@
 import asyncio
 import struct
+from datetime import timedelta
 
 from .const import DOMAIN
 from .binary_sensor import BINARY_VARIABLE_NAMES
 from .yanzi_entity import YanziEntity
+
+SCAN_INTERVAL = timedelta(minutes=10)
 
 async def async_setup_entry(hass, entry, async_add_entities):
     location = hass.data[DOMAIN][entry.entry_id]
 
     async_add_entities([
         YanziSensor(location, device, source)
-        async for device, source in location.get_device_sources()
+        async for device, source in location.device_sources
         if source['variableName'] not in BINARY_VARIABLE_NAMES
     ])
 
 
 class YanziSensor(YanziEntity):
+
+    @property
+    def should_poll(self):
+        if self.source['variableName'] == 'battery':
+            return True
+
+        return False
+
+    async def async_update(self):
+        self.source['latest'] = await self.location.get_latest(self.device['unitAddress']['did'], self.source['variableName'])
 
     @property
     def device_class(self):

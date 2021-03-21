@@ -30,7 +30,7 @@ class YanziEntity(Entity):
 
                 await self.async_update_ha_state()
                 await self.on_sample(self.source['latest'])
-        
+
         await self.async_update_ha_state()
         self.hass.bus.async_listen('yanzi_data', filter_data)
 
