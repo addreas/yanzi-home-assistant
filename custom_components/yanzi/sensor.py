@@ -25,9 +25,6 @@ class YanziSensor(YanziEntity):
 
         return False
 
-    async def async_update(self):
-        self.source['latest'] = await self.location.get_latest(self.device['unitAddress']['did'], self.source['variableName'])
-
     @property
     def device_class(self):
         vn = self.source['variableName']

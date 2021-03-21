@@ -31,11 +31,15 @@ class YanziEntity(Entity):
                 await self.async_update_ha_state()
                 await self.on_sample(self.source['latest'])
 
+        await self.async_update()
         await self.async_update_ha_state()
         self.hass.bus.async_listen('yanzi_data', filter_data)
 
     async def on_sample(self, sample):
         pass
+
+    async def async_update(self):
+        self.source['latest'] = await self.location.get_latest(self.device['unitAddress']['did'], self.source['variableName'])
 
     @property
     def should_poll(self):
