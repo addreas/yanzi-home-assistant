@@ -63,6 +63,7 @@ class YanziLocation:
 
             for child in device['chassisChildren']:
                 child['productType'] = device['productType']
+                child['name'] = device['name']
                 for source in child['dataSources']:
                     source['name'] = device['name']
                     source['latest'] = None
