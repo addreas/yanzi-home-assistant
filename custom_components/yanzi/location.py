@@ -180,6 +180,7 @@ qq_query = '''query {
         }
 
         chassisChildren {
+          key
           unitAddress {
             did
           }
