@@ -39,7 +39,7 @@ class YanziEntity(Entity):
         pass
 
     async def async_update(self):
-        self.source['latest'] = await self.location.get_latest(self.device['unitAddress']['did'], self.source['variableName'])
+        self.source['latest'] = await self.location.get_latest(self.source['did'], self.source['variableName'])
 
     @property
     def should_poll(self):

@@ -56,20 +56,19 @@ class YanziLocation:
                     # These two are always null for physical devices?
                     continue
 
+                source['did'] = device['dataSourceAddress']['did']
                 source['name'] = device['name']
                 source['latest'] = None
 
                 yield device, source
 
             for child in device['chassisChildren']:
-                child['productType'] = device['productType']
-                child['name'] = device['name']
-                child['version'] = device['version']
                 for source in child['dataSources']:
+                    source['did'] = child['dataSourceAddress']['did']
                     source['name'] = device['name']
                     source['latest'] = None
 
-                    yield child, source
+                    yield device, source
 
     async def watch(self):
         log.debug('Starting watch')
