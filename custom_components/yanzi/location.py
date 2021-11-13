@@ -141,8 +141,11 @@ class YanziLocation:
                 'numberOfSamplesBeforeStart': 1,
             }
         })
+        if response['responseCode']['name'] != 'success':
+            log.warning('Error when getting latest sample %s/%s %s', did, variable_name, response)
+            return None
         if 'sampleListDto' not in response or 'list' not in response['sampleListDto'] or len(response['sampleListDto']['list']) < 1:
-            log.warning('Malformed sample for %s/%s %s', did, variable_name, response)
+            log.warning('Malformed sample response for %s/%s %s', did, variable_name, response)
             return None
         return response['sampleListDto']['list'][0]
 
