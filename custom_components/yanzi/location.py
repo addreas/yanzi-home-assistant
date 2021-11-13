@@ -57,18 +57,17 @@ class YanziLocation:
                     continue
 
                 source['name'] = device['name']
-                source['unitTypeFixed'] = 'physicalOrChassis'
                 source['latest'] = None
 
                 yield device, source
 
             for child in device['chassisChildren']:
+                child['productType'] = device['productType']
                 for source in child['dataSources']:
                     source['name'] = device['name']
-                    source['unitTypeFixed'] = child['unitTypeFixed']
                     source['latest'] = None
 
-                    yield device, source
+                    yield child, source
 
     async def watch(self):
         log.debug('Starting watch')
@@ -181,7 +180,6 @@ qq_query = '''query {
         }
 
         chassisChildren {
-          unitTypeFixed
           unitAddress {
             did
           }
