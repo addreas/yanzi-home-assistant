@@ -61,7 +61,7 @@ class YanziEntity(Entity):
             'manufacturer': 'Yanzi Networks',
             'model': DEVICE_MODELS.get(self.device['productType'], self.device['productType']),
             'sw_version': self.device['version'],
-            'suggested_area': self.device.get('assetParent', {}).get('name'),
+            'suggested_area': (self.device.get('assetParent', {}) or {}).get('name'),
             'via_device': (DOMAIN, self.device['unitAddress']['serverDid']),
         }
 
