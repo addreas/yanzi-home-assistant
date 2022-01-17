@@ -95,7 +95,7 @@ DEVICE_CLASSES = {
     'pressure': 'pressure',
     'illuminance': 'illuminance',
     'battery': 'battery',
-    'totalpowerInst': 'power'
+    'totalpowerInst': 'power',
     'motion': 'motion',
     'uplog': 'connectivity',
 }
