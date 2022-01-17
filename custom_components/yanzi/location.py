@@ -43,7 +43,7 @@ class YanziLocation:
 
         if location['units']['cursor'] != location['units']['endCursor']:
             raise RuntimeError(
-                'Im unable to handle multiple pages of sensors.')
+                'I\'m unable to handle multiple pages of sensors.')
 
         key_to_version = {item['key']: item['version']
                           for item in location['inventory']['list']}
@@ -69,6 +69,16 @@ class YanziLocation:
                     source['latest'] = None
 
                     yield device, source
+
+                    if source['variableName'] == 'totalPowerInst':
+                        yield device, {
+                            'key': source['key'],
+                            'did': source['did'],
+                            'name': device['name'],
+                            'latest': None,
+                            'variableName': 'totalEnergy',
+                            'siUnit': 'mWs'
+                        }
 
     async def watch(self):
         log.debug('Starting watch')
@@ -149,6 +159,20 @@ class YanziLocation:
             return None
         return response['sampleListDto']['list'][0]
 
+    async def control_request_binary(self, did, value):
+        ws = await self._socket
+        response = await ws.request({
+            'messageType': 'control_request',
+            'unitAddress': {
+                'resourceType': 'UnitAddress',
+                'locationId': self.location_id,
+                'did': did
+            },
+            'controlValue': {
+                'resourceType': 'ControlValueBinary',
+                'value': value
+            }
+        })
 
 def dsa_to_key(dsa):
     gwdid = dsa['serverDid']
@@ -170,6 +194,10 @@ qq_query = '''query {
         productType
         name
         lifeCycleState
+
+        assetParent {
+          name
+        }
 
         unitAddress {
           did

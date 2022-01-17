@@ -12,7 +12,8 @@ async def async_setup_entry(hass, entry, async_add_entities):
     async_add_entities([
         YanziSensor(location, device, source)
         for device, source in location.device_sources
-        if source['variableName'] not in BINARY_VARIABLE_NAMES
+        if source['variableName'] not in BINARY_VARIABLE_NAMES and
+        source['variableName'] not in SWITCH_VARIABLE_NAMES
     ])
 
 
@@ -24,11 +25,6 @@ class YanziSensor(YanziEntity):
             return True
 
         return False
-
-    @property
-    def device_class(self):
-        vn = self.source['variableName']
-        return DEVICE_CLASSES.get(vn)
 
     @property
     def unit_of_measurement(self):
@@ -53,8 +49,17 @@ class YanziSensor(YanziEntity):
             return int(l['percentFull'])
         elif vn == 'soundPressureLevel':
             return l['max']
+        elif vn == 'totalpowerInst':
+            return l['instantPower']
+        elif vn == 'totalEnergy':
+            # seconds -> hours, millis -> kilo
+            return l['totalEnergy'] / (3600 * 1000)
+        elif 'value' in l:
+            return l['value']
+        elif vn in l:
+            return l[vn]
         else:
-            return l['value'] if l and 'value' in l else None
+            return None
 
     @property
     def state_attributes(self):
@@ -89,22 +94,14 @@ class YanziSensor(YanziEntity):
         return self.source['latest']
 
 
-DEVICE_CLASSES = {
-    'temperatureC': 'temperature',
-    'temperatureK': 'temperature',
-    'relativeHumidity': 'humidity',
-    'carbonDioxide': 'carbon_dioxide',
-    'volatileOrganicCompound': 'volatile_organic_compounds',
-    'pressure': 'pressure',
-    'illuminance': 'illuminance',
-    'battery': 'battery',
-}
-
 SI_UNITS = {
     'NA': None,
     'celsius': '°C',
     'kelvin': 'K',
-    'percent': '%'
+    'percent': '%',
+    'mlux': 'mlx',
+    'watt': 'W',
+    'mWs': 'Wh'
 }
 
 UNIT_BY_VARIABLE_NAME = {

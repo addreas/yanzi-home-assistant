@@ -7,7 +7,9 @@ from homeassistant.components.binary_sensor import BinarySensorEntity
 
 BINARY_VARIABLE_NAMES = [
     'uplog',
-    'motion'
+    'motion',
+    'onOffOutput',
+    'onOffTransition'
 ]
 
 
