@@ -48,7 +48,7 @@ class YanziLocation:
         key_to_version = {item['key']: item['version']
                           for item in location['inventory']['list']}
 
-        device = location['device']
+        device = location['gateway']
         device['version'] = key_to_version[device['key']]
         for source in device['dataSources']:
             source['did'] = device['unitAddress']['did']
