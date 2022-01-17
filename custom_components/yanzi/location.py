@@ -48,6 +48,15 @@ class YanziLocation:
         key_to_version = {item['key']: item['version']
                           for item in location['inventory']['list']}
 
+        gateway = location['gateway']
+        gateway['version'] = key_to_version[gateway['key']]
+        for source in gateway['dataSources']:
+            source['did'] = device['unitAddress']['did']
+            source['name'] = device['name']
+            source['latest'] = None
+
+            yield gateway, source
+
         for device in location['units']['list']:
             device['version'] = key_to_version[device['key']]
 
@@ -186,6 +195,21 @@ def dsa_to_key(dsa):
 
 qq_query = '''query {
   location {
+    gateway {
+      key
+      productType
+      name
+      lifeCycleState
+      unitAddress {
+        did
+        serverDid
+      }
+      dataSources {
+        key
+        variableName
+        siUnit
+      }
+    }
     units(filter:[{ name:unitTypeFixed, type: equals, value:"physicalOrChassis"}]) {
       cursor
       endCursor
@@ -201,7 +225,9 @@ qq_query = '''query {
 
         unitAddress {
           did
+          serverDid
         }
+
         dataSources {
           key
           variableName

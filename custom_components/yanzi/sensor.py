@@ -3,6 +3,7 @@ import struct
 
 from .const import DOMAIN
 from .binary_sensor import BINARY_VARIABLE_NAMES
+from .switch import SWITCH_VARIABLE_NAMES
 from .yanzi_entity import YanziEntity
 
 

@@ -56,13 +56,13 @@ class YanziEntity(Entity):
     @property
     def device_info(self):
         return {
-            "identifiers": {(DOMAIN, self.device['key']), (DOMAIN, self.device['unitAddress']['did'])},
-            "name": self.device['name'],
-            "manufacturer": "Yanzi Networks",
-            "model": DEVICE_MODELS.get(self.device['productType'], self.device['productType']),
-            "sw_version": self.device['version'],
-            "suggested_area": self.device.get('assetParent', {}).get('name'),
-            "via_device": (DOMAIN, self.device['unitAddress']['serverDid']),
+            'identifiers': {(DOMAIN, self.device['key']), (DOMAIN, self.device['unitAddress']['did'])},
+            'name': self.device['name'],
+            'manufacturer': 'Yanzi Networks',
+            'model': DEVICE_MODELS.get(self.device['productType'], self.device['productType']),
+            'sw_version': self.device['version'],
+            'suggested_area': self.device.get('assetParent', {}).get('name'),
+            'via_device': (DOMAIN, self.device['unitAddress']['serverDid']),
         }
 
     @property
@@ -76,12 +76,12 @@ class YanziEntity(Entity):
 
     @property
     def entity_category(self):
-        if self.source['variableName'] in ["uplog", "battery", "statistics", "positionLog"]:
+        if self.source['variableName'] in ['uplog', 'battery', 'statistics', 'positionLog', 'siteOnlineStatus']:
             return 'diagnostic'
 
     @property
     def entity_registry_enabled_default(self):
-        if self.source['variableName'] in ["statistics", "positionLog"]:
+        if self.source['variableName'] in ['statistics', 'positionLog', 'upsState']:
             return False
         return True
 
@@ -96,8 +96,11 @@ DEVICE_CLASSES = {
     'illuminance': 'illuminance',
     'battery': 'battery',
     'totalpowerInst': 'power',
+    'totalEnergy': 'energy',
     'motion': 'motion',
     'uplog': 'connectivity',
+    'siteOnlineStatus': 'connectivity',
+    'upsState': 'battery',
 }
 
 DEVICE_MODELS = {
