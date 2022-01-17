@@ -63,6 +63,14 @@ class YanziSensor(YanziEntity):
             return None
 
     @property
+    def state_class(self):
+        if self.source['variableName'] == 'totalEnergy':
+            return "total_increasing"
+
+        return "measurement"
+
+
+    @property
     def state_attributes(self):
         if self.source['variableName'] == 'statistics' and self.source['latest'] is not None:
             # Grabbed from pan, not sure if still correct...
