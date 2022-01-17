@@ -14,7 +14,7 @@ __LOGGER = logging.getLogger(__name__)
 CONFIG_SCHEMA = vol.Schema({DOMAIN: vol.Schema({})}, extra=vol.ALLOW_EXTRA)
 
 # For your initial PR, limit it to 1 platform.
-PLATFORMS = ['sensor', 'binary_sensor']
+PLATFORMS = ['sensor', 'binary_sensor', 'switch']
 
 
 async def async_setup(hass: HomeAssistant, config: dict):

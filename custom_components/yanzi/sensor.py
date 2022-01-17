@@ -6,6 +6,7 @@ from .binary_sensor import BINARY_VARIABLE_NAMES
 from .switch import SWITCH_VARIABLE_NAMES
 from .yanzi_entity import YanziEntity
 
+IGNORED_VARIABLE_NAMES = ['onOffTransition']
 
 async def async_setup_entry(hass, entry, async_add_entities):
     location = hass.data[DOMAIN][entry.entry_id]
@@ -14,7 +15,8 @@ async def async_setup_entry(hass, entry, async_add_entities):
         YanziSensor(location, device, source)
         for device, source in location.device_sources
         if source['variableName'] not in BINARY_VARIABLE_NAMES and
-        source['variableName'] not in SWITCH_VARIABLE_NAMES
+        source['variableName'] not in SWITCH_VARIABLE_NAMES and
+        source['variableName'] not in IGNORED_VARIABLE_NAMES
     ])
 
 
