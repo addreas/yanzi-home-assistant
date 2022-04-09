@@ -20,11 +20,12 @@ _LOGGER = logging.getLogger(__name__)
 def get_ssl_context(pk: bytes, chain: bytes):
     ctx = ssl.SSLContext(ssl.PROTOCOL_TLS_CLIENT)
     ctx.load_verify_locations(None, None, COP_ROOT)
-    with tempfile.NamedTemporaryFile() as pkfile:
-        with tempfile.NamedTemporaryFile() as chainfile:
+    with tempfile.NamedTemporaryFile(delete=False) as pkfile:
+        with tempfile.NamedTemporaryFile(delete=False) as chainfile:
             pkfile.write(pk)
             chainfile.write(chain)
-            ctx.load_cert_chain(pkfile.name, chainfile.name)
+
+    ctx.load_cert_chain(pkfile.name, chainfile.name)
 
     return ctx
 
