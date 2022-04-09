@@ -25,7 +25,7 @@ def get_ssl_context(pk: bytes, chain: bytes):
             pkfile.write(pk)
             chainfile.write(chain)
 
-    ctx.load_cert_chain(pkfile.name, chainfile.name)
+    ctx.load_cert_chain(chainfile.name, pkfile.name)
 
     return ctx
 
