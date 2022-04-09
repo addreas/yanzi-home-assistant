@@ -17,7 +17,7 @@ from custom_components.yanzi.errors import InvalidAuth
 _LOGGER = logging.getLogger(__name__)
 
 
-async def get_ssl_context(pk: str, chain: str):
+def get_ssl_context(pk: str, chain: str):
     ctx = ssl.SSLContext(ssl.PROTOCOL_TLS_CLIENT)
     ctx.load_verify_locations(None, None, COP_ROOT)
     with tempfile.TemporaryFile() as pkfile:
