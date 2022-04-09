@@ -11,9 +11,9 @@ log = logging.getLogger(__name__)
 
 
 class YanziLocation:
-    def __init__(self, host, access_token, location_id):
+    def __init__(self, host, ssl_context, location_id):
         self.host = host
-        self.access_token = access_token
+        self.ssl_context = ssl_context
         self.location_id = location_id
 
         self.device_sources = {}
@@ -97,8 +97,7 @@ class YanziLocation:
         log.debug('Starting watch')
         while self.is_loaded:
             try:
-                async with connect(f'wss://{self.host}/cirrusAPI') as ws:
-                    await ws.authenticate({'accessToken': self.access_token})
+                async with connect(f'wss://{self.host}/cirrusAPI', ssl=self.ssl_context) as ws:
                     self._socket.set_result(ws)
 
                     subscribe_request = {

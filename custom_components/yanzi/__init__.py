@@ -6,6 +6,8 @@ import voluptuous as vol
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 
+from custom_components.yanzi.tls import get_certificate, get_ssl_context
+
 from .const import DOMAIN
 from .location import YanziLocation
 
@@ -24,9 +26,12 @@ async def async_setup(hass: HomeAssistant, config: dict):
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
     """Set up yanzi from a config entry."""
 
+    ssl_context = get_ssl_context(
+        entry.data['private_key'], entry.data['certificates'])
+
     location = YanziLocation(
         entry.data['host'],
-        entry.data['access_token'],
+        ssl_context,
         entry.data['location_id'])
 
     hass.data[DOMAIN][entry.entry_id] = location

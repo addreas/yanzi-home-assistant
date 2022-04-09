@@ -1,0 +1,69 @@
+import json
+import logging
+import ssl
+import tempfile
+from time import time
+from cryptography import x509
+from cryptography.hazmat.primitives import hashes
+from cryptography.hazmat.primitives.asymmetric import rsa
+from cryptography.hazmat.primitives.serialization import Encoding, PrivateFormat, NoEncryption
+from cryptography.x509.oid import NameOID
+from requests import post
+from custom_components.yanzi.config_flow import InvalidAuth
+
+from custom_components.yanzi.const import COP_ROOT, COP_SIGN_URL
+
+_LOGGER = logging.getLogger(__name__)
+
+
+async def get_ssl_context(pk: str, chain: str):
+    ctx = ssl.SSLContext(ssl.PROTOCOL_TLS_CLIENT)
+    ctx.load_verify_locations(None, None, COP_ROOT)
+    with tempfile.TemporaryFile() as pkfile:
+        with tempfile.TemporaryFile() as chainfile:
+            pkfile.write(pk)
+            chainfile.write(chain)
+            ctx.load_cert_chain(pkfile, chainfile)
+
+    return ctx
+
+
+async def get_certificate(username: str, password: str):
+    private_key, csr = get_csr(username)
+    response = await post(COP_SIGN_URL, json={
+        "did": f"hass-{username}-{int(time.time())}",
+        "yanziId": username,
+        "password": password,
+        "csr": csr
+    })
+
+    data = response.json()
+    if data["status"] != "ACCEPTED":
+        _LOGGER.error("Failed to generate certificate: %s", json.dumps(data))
+        raise InvalidAuth
+
+    return private_key, data["certificateChain"]
+
+
+def get_csr(username: str):
+    pk = rsa.generate_private_key(
+        public_exponent=65537,
+        key_size=2048
+    )
+
+    request = x509.CertificateSigningRequestBuilder(
+    ).subject_name(x509.Name([
+        x509.NameAttribute(NameOID.COMMON_NAME, username)
+    ])).add_extension(
+        x509.BasicConstraints(ca=False, path_length=None), critical=True
+    ).sign(pk, hashes.SHA256())
+
+    private_key = pk.private_bytes(
+        Encoding.PEM,
+        PrivateFormat.PKCS8,
+        NoEncryption
+    )
+
+    csr = request.public_bytes(Encoding.PEM)
+
+    return private_key, csr

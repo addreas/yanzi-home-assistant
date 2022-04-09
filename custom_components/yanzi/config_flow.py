@@ -1,15 +1,14 @@
 import logging
 from time import time
-from requests import post
 
 import voluptuous as vol
 
 from homeassistant import config_entries, exceptions
 
-from .const import DOMAIN, COP_SIGN_URL  # pylint:disable=unused-import
+from .const import DOMAIN  # pylint:disable=unused-import
 from websockets.exceptions import WebSocketException
 from .cirrus import connect
-from .csr import get_csr
+from .tls import get_certificate, get_ssl_context
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -21,38 +20,8 @@ DATA_SCHEMA = vol.Schema({
 })
 
 
-async def validate_input(host, username, password):
-    credentials = {
-        'username': username,
-        'password': password
-    }
-
-    async with connect(f'wss://{host}/cirrusAPI') as ws:
-        session_id = await ws.authenticate(credentials)
-        if not session_id:
-            raise InvalidAuth
-        else:
-            return session_id
-
-
-async def get_certificate(username: str, password: str):
-    private_key, csr = get_csr(username)
-    response = await post(COP_SIGN_URL, json={
-        "did": f"hass-{username}-{int(time.time())}",
-        "yanziId": username,
-        "password": password,
-        "csr": csr
-    })
-
-    data = response.json()
-    assert data["status"] == "ACCEPTED"
-
-    return private_key, data["certificateChain"]
-
-
-async def get_location_name(host, session_id, location_id):
-    async with connect(f'wss://{host}/cirrusAPI') as ws:
-        await ws.authenticate({'sessionId': session_id})
+async def get_location_name(host, ssl_context, location_id):
+    async with connect(f'wss://{host}/cirrusAPI', ssl=ssl_context) as ws:
         async for response in ws.send({'messageType': 'GetLocationsRequest'}):
             for location in response['list']:
                 if location['locationAddress']['locationId'] == location_id:
@@ -80,9 +49,9 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 await self.async_set_unique_id(f'yanzi://{username}@{host}/{location_id}')
                 self._abort_if_unique_id_configured()
 
-                session_id = await validate_input(host, username, password)
                 private_key, certificates = await get_certificate(username, password)
-                location_name = await get_location_name(host, session_id, location_id)
+                ssl_context = get_ssl_context(private_key, certificates)
+                location_name = await get_location_name(host, ssl_context, location_id)
 
                 return self.async_create_entry(
                     title=f'{location_name} ({location_id})',

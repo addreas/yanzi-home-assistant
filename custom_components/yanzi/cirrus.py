@@ -120,12 +120,6 @@ class Cirrus:
         async for response in self.send(request, timeout):
             return response
 
-    async def authenticate(self, credentials):
-        response = await self.request({'messageType': 'LoginRequest', **credentials}, 30)
-        session_id = response.get('sessionId')
-        self.session_id = session_id
-        return session_id
-
     async def subscribe(self, subscribe_request):
         async def send_subscribe():
             while True:
