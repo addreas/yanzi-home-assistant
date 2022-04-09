@@ -38,7 +38,7 @@ async def get_certificate(username: str, password: str):
         "csr": csr
     }
 
-    with aiohttp.client.request("POST", COP_SIGN_URL, json=data) as res:
+    async with aiohttp.client.request("POST", COP_SIGN_URL, json=data) as res:
         data = await res.json()
         if data["status"] != "ACCEPTED":
             _LOGGER.error("Failed to generate certificate: %s",
