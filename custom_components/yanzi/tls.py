@@ -31,22 +31,21 @@ async def get_ssl_context(pk: str, chain: str):
 
 async def get_certificate(username: str, password: str):
     private_key, csr = get_csr(username)
-    response = await aiohttp.client.request(
-        "POST",
-        COP_SIGN_URL,
-        json={
-            "did": f"hass-{username}-{int(time())}",
-            "yanziId": username,
-            "password": password,
-            "csr": csr
-        })
+    data = {
+        "did": f"hass-{username}-{int(time())}",
+        "yanziId": username,
+        "password": password,
+        "csr": csr
+    }
 
-    data = await response.json()
-    if data["status"] != "ACCEPTED":
-        _LOGGER.error("Failed to generate certificate: %s", json.dumps(data))
-        raise InvalidAuth
+    with aiohttp.client.request("POST", COP_SIGN_URL, json=data) as res:
+        data = await res.json()
+        if data["status"] != "ACCEPTED":
+            _LOGGER.error("Failed to generate certificate: %s",
+                          json.dumps(data))
+            raise InvalidAuth
 
-    return private_key, data["certificateChain"]
+        return private_key, data["certificateChain"]
 
 
 def get_csr(username: str):
