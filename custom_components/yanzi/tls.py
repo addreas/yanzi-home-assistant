@@ -62,7 +62,7 @@ def get_csr(username: str):
     private_key = pk.private_bytes(
         Encoding.PEM,
         PrivateFormat.PKCS8,
-        NoEncryption
+        NoEncryption()
     )
 
     csr = request.public_bytes(Encoding.PEM)
