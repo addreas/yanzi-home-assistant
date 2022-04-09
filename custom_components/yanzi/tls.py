@@ -9,9 +9,10 @@ from cryptography.hazmat.primitives.asymmetric import rsa
 from cryptography.hazmat.primitives.serialization import Encoding, PrivateFormat, NoEncryption
 from cryptography.x509.oid import NameOID
 from requests import post
-from custom_components.yanzi.config_flow import InvalidAuth
+
 
 from custom_components.yanzi.const import COP_ROOT, COP_SIGN_URL
+from custom_components.yanzi.errors import InvalidAuth
 
 _LOGGER = logging.getLogger(__name__)
 

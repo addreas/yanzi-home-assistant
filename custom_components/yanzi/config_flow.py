@@ -1,9 +1,10 @@
 import logging
-from time import time
 
 import voluptuous as vol
 
-from homeassistant import config_entries, exceptions
+from homeassistant import config_entries
+
+from custom_components.yanzi.errors import InvalidAuth, InvalidLocation
 
 from .const import DOMAIN  # pylint:disable=unused-import
 from websockets.exceptions import WebSocketException
@@ -77,11 +78,3 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         return self.async_show_form(
             step_id='user', data_schema=DATA_SCHEMA, errors=errors
         )
-
-
-class InvalidAuth(exceptions.HomeAssistantError):
-    '''Error to indicate there is invalid auth.'''
-
-
-class InvalidLocation(exceptions.HomeAssistantError):
-    '''Error to indicate that the location was not found.'''
