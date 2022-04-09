@@ -2,13 +2,13 @@ import json
 import logging
 import ssl
 import tempfile
+import aiohttp.client
 from time import time
 from cryptography import x509
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.asymmetric import rsa
 from cryptography.hazmat.primitives.serialization import Encoding, PrivateFormat, NoEncryption
 from cryptography.x509.oid import NameOID
-from requests import post
 
 
 from custom_components.yanzi.const import COP_ROOT, COP_SIGN_URL
@@ -31,14 +31,17 @@ async def get_ssl_context(pk: str, chain: str):
 
 async def get_certificate(username: str, password: str):
     private_key, csr = get_csr(username)
-    response = await post(COP_SIGN_URL, json={
-        "did": f"hass-{username}-{int(time())}",
-        "yanziId": username,
-        "password": password,
-        "csr": csr
-    })
+    response = await aiohttp.client.request(
+        "POST",
+        COP_SIGN_URL,
+        json={
+            "did": f"hass-{username}-{int(time())}",
+            "yanziId": username,
+            "password": password,
+            "csr": csr
+        })
 
-    data = response.json()
+    data = await response.json()
     if data["status"] != "ACCEPTED":
         _LOGGER.error("Failed to generate certificate: %s", json.dumps(data))
         raise InvalidAuth
