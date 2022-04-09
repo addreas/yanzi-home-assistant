@@ -9,8 +9,6 @@ from homeassistant.core import HomeAssistant
 from .const import DOMAIN
 from .location import YanziLocation
 
-__LOGGER = logging.getLogger(__name__)
-
 CONFIG_SCHEMA = vol.Schema({DOMAIN: vol.Schema({})}, extra=vol.ALLOW_EXTRA)
 
 # For your initial PR, limit it to 1 platform.
@@ -43,18 +41,28 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
             hass.states.async_set(counter_key, count, {
                                   'unit_of_measurement': 'samples'})
 
-    location._hass_watcher_task = asyncio.create_task(watch())
+    async def sources():
+        while location.is_loaded:
+            try:
+                await location.get_device_sources()
+                for component in PLATFORMS:
+                    hass.async_create_task(
+                        hass.config_entries.async_forward_entry_setup(entry, component))
+            finally:
+                await asyncio.sleep(60*10)
 
-    await location.get_device_sources()
-    for component in PLATFORMS:
-        hass.async_create_task(
-            hass.config_entries.async_forward_entry_setup(entry, component))
+    location._hass_watcher_task = asyncio.create_task(watch())
+    location._hass_sources_task = asyncio.create_task(sources())
 
     return True
 
 
 async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry):
     """Unload a config entry."""
+    location = hass.data[DOMAIN].pop(entry.entry_id)
+
+    location.unload()
+
     unload_ok = all(
         await asyncio.gather(
             *[
@@ -65,7 +73,7 @@ async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry):
         )
     )
     if unload_ok:
-        location = hass.data[DOMAIN].pop(entry.entry_id)
         location._hass_watcher_task.cancel()
+        location._hass_sources_task.cancel()
 
     return unload_ok

@@ -1,5 +1,6 @@
-import asyncio
-import time
+from homeassistant.core import HomeAssistant
+from homeassistant.config_entries import ConfigEntry
+from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
 from .const import DOMAIN
 from .yanzi_entity import YanziEntity
@@ -8,7 +9,7 @@ from homeassistant.components.switch import SwitchEntity
 SWITCH_VARIABLE_NAMES = ['onOffOutput']
 
 
-async def async_setup_entry(hass, entry, async_add_entities):
+async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry, async_add_entities: AddEntitiesCallback):
     location = hass.data[DOMAIN][entry.entry_id]
 
     async_add_entities([
@@ -36,9 +37,10 @@ class YanziSwitch(SwitchEntity, YanziEntity):
 
     async def async_turn_on(self, **kwargs):
         """Turn the entity on."""
-        self.location.control_request_binary(self.source['did'], self.source['variableName'], 'onn')
+        self.location.control_request_binary(
+            self.source['did'], self.source['variableName'], 'onn')
 
     async def async_turn_off(self, **kwargs):
         """Turn the entity off."""
-        self.location.control_request_binary(self.source['did'], self.source['variableName'], 'off')
-
+        self.location.control_request_binary(
+            self.source['did'], self.source['variableName'], 'off')

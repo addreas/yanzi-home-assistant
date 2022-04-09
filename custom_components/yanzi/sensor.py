@@ -1,5 +1,8 @@
-import asyncio
 import struct
+
+from homeassistant.core import HomeAssistant
+from homeassistant.config_entries import ConfigEntry
+from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
 from .const import DOMAIN
 from .binary_sensor import BINARY_VARIABLE_NAMES
@@ -8,7 +11,8 @@ from .yanzi_entity import YanziEntity
 
 IGNORED_VARIABLE_NAMES = ['onOffTransition']
 
-async def async_setup_entry(hass, entry, async_add_entities):
+
+async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry, async_add_entities: AddEntitiesCallback):
     location = hass.data[DOMAIN][entry.entry_id]
 
     async_add_entities([
@@ -70,7 +74,6 @@ class YanziSensor(YanziEntity):
             return "total_increasing"
 
         return "measurement"
-
 
     @property
     def state_attributes(self):

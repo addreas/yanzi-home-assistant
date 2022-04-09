@@ -1,9 +1,13 @@
 import asyncio
 import time
 
+from homeassistant.core import HomeAssistant
+from homeassistant.config_entries import ConfigEntry
+from homeassistant.components.binary_sensor import BinarySensorEntity
+from homeassistant.helpers.entity_platform import AddEntitiesCallback
+
 from .const import DOMAIN
 from .yanzi_entity import YanziEntity
-from homeassistant.components.binary_sensor import BinarySensorEntity
 
 BINARY_VARIABLE_NAMES = [
     'uplog',
@@ -11,7 +15,7 @@ BINARY_VARIABLE_NAMES = [
 ]
 
 
-async def async_setup_entry(hass, entry, async_add_entities):
+async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry, async_add_entities: AddEntitiesCallback):
     location = hass.data[DOMAIN][entry.entry_id]
 
     async_add_entities([

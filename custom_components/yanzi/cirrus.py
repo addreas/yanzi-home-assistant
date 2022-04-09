@@ -5,20 +5,20 @@ import time
 import contextlib
 import logging
 
-import websockets
+import websockets.client
 log = logging.getLogger(__name__)
 
 
 @contextlib.asynccontextmanager
 async def connect(uri, **kwargs):
-    async with websockets.connect(uri, **kwargs) as ws:
+    async with websockets.client.connect(uri, **kwargs) as ws:
         ws._uri = uri
         async with Cirrus(ws) as ws:
             yield ws
 
 
 class Cirrus:
-    def __init__(self, ws):
+    def __init__(self, ws: websockets.client.WebSocketClientProtocol):
         self.ws = ws
         self._current_message_id = 0
 

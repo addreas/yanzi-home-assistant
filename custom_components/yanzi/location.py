@@ -18,6 +18,10 @@ class YanziLocation:
 
         self.device_sources = {}
         self._socket = asyncio.Future()
+        self.is_loaded = True
+
+    def unload(self):
+        self.is_loaded = False
 
     async def get_device_sources(self):
         self.device_sources = [x async for x in self._get_device_sources()]
@@ -91,7 +95,7 @@ class YanziLocation:
 
     async def watch(self):
         log.debug('Starting watch')
-        while True:
+        while self.is_loaded:
             try:
                 async with connect(f'wss://{self.host}/cirrusAPI') as ws:
                     await ws.authenticate({'accessToken': self.access_token})
@@ -132,14 +136,13 @@ class YanziLocation:
                             yield dsa_to_key(emulated_dsa), emulated_sample
 
             except CancelledError:
-                self._socket = asyncio.Future()
                 await asyncio.sleep(1)
-                break
             except Exception as e:
-                self._socket = asyncio.Future()
                 log.warning(
-                    'Restarting ws watch in 10 seconds because of: %s', e, exc_info=e)
-                await asyncio.sleep(10)
+                    'Restarting ws watch in 60 seconds because of: %s', e, exc_info=e)
+                await asyncio.sleep(60)
+            finally:
+                self._socket = asyncio.Future()
 
     async def get_latest(self, did, variable_name):
         ws = await self._socket
@@ -161,10 +164,12 @@ class YanziLocation:
             }
         })
         if response['responseCode']['name'] != 'success':
-            log.warning('Error when getting latest sample %s/%s %s', did, variable_name, response)
+            log.warning('Error when getting latest sample %s/%s %s',
+                        did, variable_name, response)
             return None
         if 'sampleListDto' not in response or 'list' not in response['sampleListDto'] or len(response['sampleListDto']['list']) < 1:
-            log.warning('Malformed sample response for %s/%s %s', did, variable_name, response)
+            log.warning('Malformed sample response for %s/%s %s',
+                        did, variable_name, response)
             return None
         return response['sampleListDto']['list'][0]
 
@@ -182,6 +187,7 @@ class YanziLocation:
                 'value': value
             }
         })
+
 
 def dsa_to_key(dsa):
     gwdid = dsa['serverDid']
