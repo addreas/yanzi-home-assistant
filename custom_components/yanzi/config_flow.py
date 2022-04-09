@@ -1,13 +1,15 @@
 import logging
-import base64
+from time import time
+from requests import post
 
 import voluptuous as vol
 
-from homeassistant import config_entries, core, exceptions
+from homeassistant import config_entries, exceptions
 
-from .const import DOMAIN  # pylint:disable=unused-import
+from .const import DOMAIN, COP_SIGN_URL  # pylint:disable=unused-import
 from websockets.exceptions import WebSocketException
 from .cirrus import connect
+from .csr import get_csr
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -33,20 +35,19 @@ async def validate_input(host, username, password):
             return session_id
 
 
-async def get_access_token(host, session_id, location_id):
-    async with connect(f'wss://{host}/cirrusAPI') as ws:
-        await ws.authenticate({'sessionId': session_id})
-        response = await ws.request({
-            'messageType': 'CirrusLocalRequest',
-            'localMessageType': 'configAPI',
-            'list': [{
-                'resourceType': 'BlobDTO',
-                'blobType': 'getAccessToken',
-                'blobData': base64.b64encode(location_id.encode()).decode()
-            }]
-        })
+async def get_certificate(username: str, password: str):
+    private_key, csr = get_csr(username)
+    response = await post(COP_SIGN_URL, json={
+        "did": f"hass-{username}-{int(time.time())}",
+        "yanziId": username,
+        "password": password,
+        "csr": csr
+    })
 
-        return base64.b64decode(response['list'][0]['blobData']).decode()
+    data = response.json()
+    assert data["status"] == "ACCEPTED"
+
+    return private_key, data["certificateChain"]
 
 
 async def get_location_name(host, session_id, location_id):
@@ -80,7 +81,7 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 self._abort_if_unique_id_configured()
 
                 session_id = await validate_input(host, username, password)
-                access_token = await get_access_token(host, session_id, location_id)
+                private_key, certificates = await get_certificate(username, password)
                 location_name = await get_location_name(host, session_id, location_id)
 
                 return self.async_create_entry(
@@ -88,7 +89,8 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                     data={
                         'host': host,
                         'location_id': location_id,
-                        'access_token': access_token
+                        'private_key': private_key,
+                        "certificates": certificates,
                     })
             except WebSocketException as e:
                 _LOGGER.exception(e)
