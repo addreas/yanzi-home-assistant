@@ -35,7 +35,7 @@ async def get_certificate(username: str, password: str):
         "did": f"hass-{username}-{int(time())}",
         "yanziId": username,
         "password": password,
-        "csr": csr
+        "csr": csr.decode()
     }
 
     async with aiohttp.client.request("POST", COP_SIGN_URL, json=data) as res:
