@@ -32,7 +32,7 @@ async def get_ssl_context(pk: str, chain: str):
 async def get_certificate(username: str, password: str):
     private_key, csr = get_csr(username)
     response = await post(COP_SIGN_URL, json={
-        "did": f"hass-{username}-{int(time.time())}",
+        "did": f"hass-{username}-{int(time())}",
         "yanziId": username,
         "password": password,
         "csr": csr
