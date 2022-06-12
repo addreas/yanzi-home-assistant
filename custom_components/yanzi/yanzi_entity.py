@@ -1,5 +1,5 @@
 import logging
-from homeassistant.helpers.entity import Entity
+from homeassistant.helpers.entity import Entity, EntityCategory
 
 from .const import DOMAIN
 
@@ -76,7 +76,7 @@ class YanziEntity(Entity):
     @property
     def entity_category(self):
         if self.source['variableName'] in ['uplog', 'battery', 'statistics', 'positionLog', 'siteOnlineStatus']:
-            return 'diagnostic'
+            return EntityCategory.DIAGNOSTIC
 
     @property
     def entity_registry_enabled_default(self):
